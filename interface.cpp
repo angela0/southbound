@@ -132,8 +132,7 @@ void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 
     uint8_t tmpbuf[BUFSIZE];
 
-    ssize_t getn = recv(watcher->fd, tmpbuf, BUFSIZE, 0);
-
+    ssize_t getn;
     if (getn < 0)
     {
         perror("recv error:");
@@ -154,12 +153,29 @@ void read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
     {
         if (fdbuf[fd]->jsonlen == 0)
         {
+            getn  = recv(watcher->fd, tmpbuf, 8, 0);
             fdbuf[fd]->jsonlen = *(uint32_t *)(tmpbuf+4);
             buf = (uint8_t *)realloc(buf, fdbuf[watcher->fd]->jsonlen);
-            if (fdbuf[fd]->jsonlen - fdbuf[fd]->getlen > getn-8)
-            {
-                bcopy(tmpbuf+8, buf+fdbuf[fd]->getlen, );
-            }
+        }
+        else
+        {
+            int needn;
+            if ((needn = fdbuf[fd]->jsonlen - fdbuf[fd]->getlen) < BUFSIZE)
+                getn = recv(watcher->fd, tmpbuf, needn, 0);
+            else
+                getn = recv(watcher->fd, tmpbuf, BUFSIZE, 0);
+
+            bcopy(tmpbuf, fdbuf[fd]->buf+fdbuf[fd]->getlen, getn);
+        }
+
+        if (fdbuf[fd]->jsonlen == fdbuf[fd]->getlen)
+        {
+            //process full json data
+            printf("recive over\n");
+
+            //clear buf
+            fdbuf[fd]->jsonlen = 0;
+            fdbuf[fd]->getlen = 0;
         }
     }
 
