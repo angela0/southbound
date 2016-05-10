@@ -1,0 +1,8 @@
+{
+  "path_id": 123,
+  "local_ip": 0,
+  "local_port": 1234,
+  "remote_ip": 0,
+  "remote_port": 4321,
+  "direction": "A"
+}
